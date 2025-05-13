@@ -1,0 +1,18 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres
+    container_name: simple-board-db
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: simple_board_user
+      POSTGRES_PASSWORD: simple_board_password
+      POSTGRES_DB: simple_board
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
