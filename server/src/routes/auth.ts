@@ -50,47 +50,45 @@ const register = async (req: Request, res: Response) => {
   res.status(201).json(user);
 }
 
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret";
+
 const login = async (req: Request, res: Response) => {
-  const dto = plainToInstance(LoginDto, req.body);
-  const errors = await validate(dto);
-  if (errors.length > 0) {
-    res.status(400).json({ errors });
-  }
+  const { username, password } = req.body;
 
   const userRepo = AppDataSource.getRepository(User);
-  const user = await userRepo.findOneBy({ email: dto.email });
+  const user = await userRepo.findOneBy({ username });
 
   if (!user) {
-    res.status(401).json({ message: "잘못된 이메일입니다." });
+    res.status(401).json({ message: "유저를 찾을 수 없습니다" });
     return;
   }
 
-  const isValid = await bcrypt.compare(dto.password, user.password);
-  if (!isValid) {
-    res.status(401).json({ message: "비밀번호가 일치하지 않습니다." });
+  const isPasswordValid = await bcrypt.compare(password, user.password);
+  if (!isPasswordValid) {
+    res.status(401).json({ message: "비밀번호가 틀립니다" });
     return;
   }
 
-  const token = jwt.sign(
-    { id: user.id, username: user.username },
-    process.env.JWT_SECRET!,
-    { expiresIn: "1h" }
-  );
+  const token = jwt.sign({ username: user.username }, JWT_SECRET, { expiresIn: "1d" });
 
-  res.status(200).json({
-    token,
-    user: {
-      id: user.id,
-      email: user.email,
-      username: user.username,
-      nickname: user.nickname,
-      createdAt: user.createdAt
-    }
-  });
-}
+  res
+    .cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 1000 * 60 * 60 * 24,
+      sameSite: "lax",
+    })
+    .json({ user });
+};
+
+const logout = (req: Request, res: Response) => {
+  res.clearCookie("token").json({ message: "로그아웃 완료" });
+};
+
 
 router.post("/register", register);
 router.post("/login", login);
+router.post("/logout", logout);
 router.get("/me", checkAuth, me)
 
 export default router;

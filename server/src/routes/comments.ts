@@ -50,14 +50,19 @@ const getCommentList = async (req: Request, res: Response) => {
   const commentRepo = AppDataSource.getRepository(Comment);
 
   const [comments, total] = await commentRepo.findAndCount({
-    where: { postId },
+    where: { post: { id: postId } },
     order: { createdAt: "DESC" },
     relations: ["user", "votes"],
     take: limit,
     skip,
   });
 
-  comments.forEach((c) => c.setUserVote?.((req as any).user));
+  const user = (req as any).user;
+
+  comments.forEach((c) => {
+    if (user) c.setUserVote(user); // ✅ null 체크 추가
+  });
+
 
   res.status(200).json({
     comments,
@@ -80,12 +85,12 @@ const updateComment = async (req: Request, res: Response) => {
 
   if (!comment) {
     res.status(404).json({ message: "댓글을 찾을 수 없습니다." });
-    return 
+    return
   }
 
   if (comment.user.username !== user.username) {
     res.status(403).json({ message: "수정 권한이 없습니다." });
-    return 
+    return
   }
 
   comment.body = req.body.content ?? comment.body;
@@ -107,12 +112,12 @@ const deleteComment = async (req: Request, res: Response) => {
 
   if (!comment) {
     res.status(404).json({ message: "댓글을 찾을 수 없습니다." });
-    return 
+    return
   }
 
   if (comment.user.username !== user.username) {
     res.status(403).json({ message: "삭제 권한이 없습니다." });
-    return 
+    return
   }
 
   await commentRepo.remove(comment);
@@ -122,8 +127,8 @@ const deleteComment = async (req: Request, res: Response) => {
 
 
 router.post("/", checkAuth, comment);
-router.put("/comments/:id", checkAuth, updateComment);
-router.delete("/comments/:id", checkAuth, deleteComment);
-router.get("/comments", getCommentList)
+router.put("/:id", checkAuth, updateComment);
+router.delete("/:id", checkAuth, deleteComment);
+router.get("/", getCommentList)
 
 export default router;

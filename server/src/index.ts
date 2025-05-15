@@ -10,16 +10,22 @@ import postRoutes from "./routes/posts"
 import commentRoutes from "./routes/comments"
 import voteRoutes from "./routes/votes"
 import { AppDataSource } from "./data-source";
+import cookieParser from "cookie-parser";
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 4000;
+const origin = "http://localhost:3000";
 
-app.use(cors());
+app.use(cors({
+    origin,
+    credentials: true
+}));
 app.use(helmet());
 app.use(morgan("dev"));
 app.use(express.json());
+app.use(cookieParser())
 app.use("/api/auth", authRoutes)
 app.use("/api/posts", postRoutes)
 app.use("/api/comments", commentRoutes)
