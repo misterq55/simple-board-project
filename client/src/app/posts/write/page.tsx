@@ -27,13 +27,12 @@ export default function WritePage() {
     }
 
     try {
-      await axios.post(
+      const res = await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL}/posts`,
         { title, body },
         { withCredentials: true }
       );
-      alert("작성 완료!");
-      router.push("/");
+      router.push(`/posts/${res.data.identifier}/${res.data.slug}`);
     } catch (err: any) {
       alert("글 작성 실패: " + (err.response?.data?.message || err.message));
     }

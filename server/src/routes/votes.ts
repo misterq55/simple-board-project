@@ -31,6 +31,11 @@ const vote = async (req: Request, res: Response) => {
       res.status(404).json({ message: "게시글이 존재하지 않습니다." });
       return;
     }
+
+    if (targetPost && targetPost.username === user.username) {
+      return;
+    }
+
   } else if (dto.commentId) {
     targetComment = await AppDataSource.getRepository(Comment).findOneBy({ id: dto.commentId });
     if (!targetComment) {
@@ -39,7 +44,6 @@ const vote = async (req: Request, res: Response) => {
     }
 
     if (targetComment.username === user.username) {
-      res.status(403).json({ message: "본인 댓글은 추천할 수 없습니다." });
       return;
     }
   } else {
@@ -51,11 +55,12 @@ const vote = async (req: Request, res: Response) => {
   const existingVote = await voteRepo.findOne({
     where: {
       username: user.username,
-      ...(targetPost ? { post: targetPost } : {}),
-      ...(targetComment ? { comment: targetComment } : {}),
+      ...(dto.postId ? { post: { id: dto.postId } } : {}),
+      ...(dto.commentId ? { comment: { id: dto.commentId } } : {}),
     },
     relations: ["post", "comment"],
   });
+
 
   // 투표 처리
   if (!existingVote && dto.value !== 0) {

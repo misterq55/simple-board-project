@@ -5,11 +5,15 @@ import Link from "next/link";
 type ResponseData = {
   posts: Post[];
   totalPages: number;
-  currentPage: number;
+  page: number;
 };
 
-export default async function HomePage() {
-  const page = 1;
+type Props = {
+  searchParams: { page?: string };
+};
+
+export default async function HomePage({searchParams} : Props) {
+  const page = Number(searchParams.page) || 1;
   const res = await fetch(`http://localhost:4000/api/posts?page=${page}&limit=10`, {
     cache: "no-store",
   });
@@ -71,7 +75,7 @@ export default async function HomePage() {
             key={p}
             href={`/?page=${p}`}
             className={`px-3 py-1 rounded border ${
-              p === data.currentPage
+              p === data.page
                 ? "bg-blue-500 text-white"
                 : "bg-white text-blue-500 hover:bg-gray-100"
             }`}

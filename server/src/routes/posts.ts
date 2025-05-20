@@ -39,14 +39,14 @@ const getPostList = async (req: Request, res: Response) => {
   const limit = Number(req.query.limit) || 10;
   const skip = (page - 1) * limit;
 
+  console.log("page : ", page)
+
   const [posts, total] = await postRepo.findAndCount({
     order: { createdAt: "DESC" },
     relations: ["user", "comments", "votes"],
     take: limit,
     skip,
   });
-
-  posts.forEach((p) => p.setUserVote((req as any).user));
 
   res.status(200).json({
     posts,
@@ -69,7 +69,10 @@ const getPost = async (req: Request, res: Response) => {
       relations: ["user", "comments", "votes"]
     });
 
-    post.setUserVote((req as any).user); // 로그인한 사용자의 추천 여부 반영
+    const user = (req as any).user;
+    if (user) {
+      post.setUserVote(user); // ✅ 로그인한 경우에만 호출
+    }
 
     res.status(200).json(post);
   } catch (err) {
